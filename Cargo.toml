@@ -1,0 +1,11 @@
+[package]
+name = "typeholder"
+version = "0.0.1"
+authors = ["Yue Liu <yue.liu@mail.com>"]
+
+[dependencies]
+gtk = { git = "https://github.com/gtk-rs/gtk.git", features = ["v3_14"] }
+gdk = { git = "https://github.com/gtk-rs/gdk" }
+pango = { git = "https://github.com/gtk-rs/pango" }
+servo-fontconfig = "0.4.0"
+sxd-document = "0.2.2"
