@@ -28,7 +28,7 @@ fn main() {
 
 fn generate_blocks_macro(lines: Vec<String>) -> String {
     let codes = lines
-        .into_iter()
+        .iter()
         .map(|l| {
             let pair: Vec<&str> = l.splitn(2, "; ").collect();
             let range: Vec<&str> = pair[0].splitn(2, "..").collect();
@@ -77,14 +77,46 @@ fn generate_scripts_macro(lines: Vec<String>) -> String {
         })
         .collect();
 
-    let codes = scripts
+    let merged_scripts: LinkedHashMap<&str, Vec<(String, String)>> = scripts
+        .iter()
+        .map(|(name, ranges)| {
+            let ranges_in_other_scripts: Vec<(i32, i32)> = scripts
+                .iter()
+                .filter(|&(n, _)| n != name)
+                .flat_map(|(_, r)| r)
+                .map(|&(l, r)| {
+                    (
+                        i32::from_str_radix(l, 16).unwrap(),
+                        i32::from_str_radix(r, 16).unwrap(),
+                    )
+                })
+                .collect();
+
+            let merged_ranges: Vec<(String, String)> = ranges
+                .iter()
+                .map(|&(l, r)| (l.to_string(), r.to_string()))
+                .coalesce(|x, y| match ranges_in_other_scripts.iter().all(|&(left,
+                   right)| {
+                    right < i32::from_str_radix(&*x.0, 16).unwrap() ||
+                        left > i32::from_str_radix(&*y.1, 16).unwrap()
+                }) {
+                    true => Ok((x.0, y.1)),
+                    false => Err((x, y)),
+                })
+                .collect();
+
+            (*name, merged_ranges)
+        })
+        .collect();
+
+    let codes = merged_scripts
         .iter()
         .map(|(k, v)| {
             format!(
                 "Range::Script {{ name: String::from(\"{}\"), code_points: vec![{}] }}",
                 k,
-                v.into_iter()
-                    .map(|&(start, end)| format!("(0x{}, 0x{})", start, end))
+                v.iter()
+                    .map(|&(ref start, ref end)| format!("(0x{}, 0x{})", start, end))
                     .join(", ")
             )
         })
