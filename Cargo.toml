@@ -2,6 +2,11 @@
 name = "typeholder"
 version = "0.0.1"
 authors = ["Yue Liu <yue.liu@mail.com>"]
+build = "build.rs"
+
+[build-dependencies]
+itertools = "0.6.0"
+linked-hash-map = "0.4.2"
 
 [dependencies]
 gtk = { git = "https://github.com/gtk-rs/gtk.git", features = ["v3_14"] }
@@ -9,3 +14,4 @@ gdk = { git = "https://github.com/gtk-rs/gdk" }
 pango = { git = "https://github.com/gtk-rs/pango" }
 servo-fontconfig = "0.4.0"
 sxd-document = "0.2.2"
+lazy_static = "0.2"

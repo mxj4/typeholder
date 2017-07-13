@@ -4,7 +4,16 @@ extern crate pango;
 
 use gtk::prelude::*;
 
+#[macro_use]
+extern crate lazy_static;
+
+
+mod range;
+
 fn main() {
+    println!("UNICODE_BLOCKS[15]: {:?}", range::UNICODE_BLOCKS[15]);
+    println!("UNICODE_SCRIPTS[35]: {:?}", range::UNICODE_SCRIPTS[35]);
+
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
