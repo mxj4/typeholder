@@ -3,6 +3,7 @@ name = "typeholder"
 version = "0.0.1"
 dependencies = [
  "gdk 0.5.3 (git+https://github.com/gtk-rs/gdk)",
+ "gettext-rs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gtk 0.1.3 (git+https://github.com/gtk-rs/gtk.git)",
  "itertools 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -139,6 +140,11 @@ dependencies = [
  "pango-sys 0.3.4 (git+https://github.com/gtk-rs/sys)",
  "pkg-config 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "gettext-rs"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gio"
@@ -355,6 +361,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum gdk-pixbuf 0.1.3 (git+https://github.com/gtk-rs/gdk-pixbuf)" = "<none>"
 "checksum gdk-pixbuf-sys 0.3.4 (git+https://github.com/gtk-rs/sys)" = "<none>"
 "checksum gdk-sys 0.3.4 (git+https://github.com/gtk-rs/sys)" = "<none>"
+"checksum gettext-rs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "823d7e5d0e615f937c7629991bc9f4c090ad582303214c38744e1a16d6ffbe5e"
 "checksum gio 0.1.3 (git+https://github.com/gtk-rs/gio)" = "<none>"
 "checksum gio-sys 0.3.4 (git+https://github.com/gtk-rs/sys)" = "<none>"
 "checksum glib 0.1.3 (git+https://github.com/gtk-rs/glib)" = "<none>"
