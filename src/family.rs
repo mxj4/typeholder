@@ -30,7 +30,7 @@ const WEIGHT_KEYWORDS: [&str; 25] =
     ["black", "bold", "heavy", "light", "thin"]
 );
 
-const MORE_WEIGHT_KEYWORDS: [&str; 3] = ["medium", "normal", "regular"];
+const MORE_WEIGHT_KEYWORDS: [&str; 4] = ["medium", "normal", "regular", "condensed"];
 
 // generate list of font families using `fc-list` command.
 // if the font already defined a family name without font weight

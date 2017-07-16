@@ -6,7 +6,7 @@ extern crate itertools;
 use gtk::prelude::*;
 use gtk::{Window, WindowPosition, WindowType, HeaderBar, StackSwitcher, ToggleButton, Image,
           IconSize, Paned, Orientation, TreeStore, TreeView, TreeViewColumn, CellRendererText,
-          ListBox, ListBoxRow};
+          ListBox, ListBoxRow, Label, Viewport, ScrolledWindow, PolicyType};
 
 #[macro_use]
 extern crate lazy_static;
@@ -25,9 +25,6 @@ fn append_text_column(tree: &TreeView) {
 
 fn main() {
     // debug
-    for i in family::read_available_families() {
-        println!("{}", i.name);
-    }
     println!("UNICODE_BLOCKS[15]: {:?}", range::UNICODE_BLOCKS[15]);
     println!("UNICODE_SCRIPTS[35]: {:?}", range::UNICODE_SCRIPTS[35]);
 
@@ -88,11 +85,26 @@ fn main() {
     let search_button = ToggleButton::new();
     search_button.set_image(&search_button_image);
 
+    let fonts_scrolled = ScrolledWindow::new(None, None);
+    fonts_scrolled.set_policy(PolicyType::Never, PolicyType::Automatic);
+    let fonts_view = Viewport::new(None, None);
     let fonts_list = ListBox::new();
+    let available_families = family::read_available_families();
+    for fam in available_families {
+        let row = ListBoxRow::new();
+        let label = Label::new(None);
+        //label.set_markup(format!("{}", &fam.name).as_str());
+        label.set_markup(format!("<span font_family=\"{}\">{}</span>", &fam.name, &fam.name).as_str());
+        row.add(&label);
+
+        fonts_list.add(&row);
+    }
+    fonts_view.add(&fonts_list);
+    fonts_scrolled.add(&fonts_view);
 
     paned.add1(&stack);
-    paned.add2(&fonts_list);
-    paned.set_position(280);
+    paned.add2(&fonts_scrolled);
+    paned.set_position(245);
 
     header_bar.pack_start(&switcher);
     header_bar.pack_end(&search_button);
