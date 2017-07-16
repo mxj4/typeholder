@@ -1,6 +1,7 @@
 extern crate gtk;
 extern crate gdk;
 extern crate pango;
+extern crate itertools;
 
 use gtk::prelude::*;
 use gtk::{Window, WindowPosition, WindowType, HeaderBar, StackSwitcher, ToggleButton, Image,
@@ -11,6 +12,7 @@ use gtk::{Window, WindowPosition, WindowType, HeaderBar, StackSwitcher, ToggleBu
 extern crate lazy_static;
 
 mod range;
+mod family;
 
 fn append_text_column(tree: &TreeView) {
     let column = TreeViewColumn::new();
@@ -23,6 +25,9 @@ fn append_text_column(tree: &TreeView) {
 
 fn main() {
     // debug
+    for i in family::read_available_families() {
+        println!("{}", i.name);
+    }
     println!("UNICODE_BLOCKS[15]: {:?}", range::UNICODE_BLOCKS[15]);
     println!("UNICODE_SCRIPTS[35]: {:?}", range::UNICODE_SCRIPTS[35]);
 
