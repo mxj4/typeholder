@@ -18,6 +18,7 @@ macro_rules! iproduct_concat_impl {
 }
 
 
+#[derive(Debug)]
 pub struct Family {
     pub name: String,
     pub stripped_ranges: Vec<Range>,

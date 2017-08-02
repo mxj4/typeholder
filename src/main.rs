@@ -1,8 +1,14 @@
-extern crate gtk;
-extern crate gdk;
-extern crate pango;
-extern crate itertools;
+#![feature(conservative_impl_trait)]
 
+extern crate glib;
+extern crate gtk;
+//extern crate gdk;
+//extern crate pango;
+extern crate itertools;
+extern crate sxd_document;
+
+use std::time::Instant;
+use glib::{Continue, idle_add, timeout_add, timeout_add_seconds};
 use gtk::prelude::*;
 use gtk::{Window, WindowPosition, WindowType, HeaderBar, StackSwitcher, ToggleButton, Image,
           IconSize, Paned, Orientation, TreeStore, TreeView, TreeViewColumn, CellRendererText,
@@ -13,6 +19,7 @@ extern crate lazy_static;
 
 mod range;
 mod family;
+mod config;
 
 fn append_text_column(tree: &TreeView) {
     let column = TreeViewColumn::new();
@@ -27,6 +34,15 @@ fn main() {
     // debug
     println!("UNICODE_BLOCKS[15]: {:?}", range::UNICODE_BLOCKS[15]);
     println!("UNICODE_SCRIPTS[35]: {:?}", range::UNICODE_SCRIPTS[35]);
+
+    let available_families = family::read_available_families();
+    
+    let fc_config_path = format!(
+        "{}/fontconfig/fonts.conf",
+        glib::utils::get_user_config_dir().expect("$XDG_CONFIG_HOME not set!")
+    );
+    let fc_config = config::parse_or_default(&fc_config_path, &available_families);
+    println!("Parsed config: {:?}", fc_config);
 
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
@@ -89,12 +105,12 @@ fn main() {
     fonts_scrolled.set_policy(PolicyType::Never, PolicyType::Automatic);
     let fonts_view = Viewport::new(None, None);
     let fonts_list = ListBox::new();
-    let available_families = family::read_available_families();
-    for fam in available_families {
+    for fam in &available_families {
         let row = ListBoxRow::new();
         let label = Label::new(None);
-        //label.set_markup(format!("{}", &fam.name).as_str());
-        label.set_markup(format!("<span font_family=\"{}\">{}</span>", &fam.name, &fam.name).as_str());
+        label.set_markup(format!("{}", &fam.name).as_str());
+        // todo
+        //label.set_markup(format!("<span font_family=\"{}\">{}</span>", &fam.name, &fam.name).as_str());
         row.add(&label);
 
         fonts_list.add(&row);
@@ -112,6 +128,14 @@ fn main() {
     window.set_titlebar(&header_bar);
     window.add(&paned);
 
+    // todo
+    let start = Instant::now();
     window.show_all();
+    println!(
+        "Init time: {} s",
+        Instant::now().duration_since(start).as_secs()
+    );
+
+    glib::idle_add(|| Continue(false));
     gtk::main();
 }
