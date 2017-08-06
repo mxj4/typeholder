@@ -9,10 +9,9 @@ itertools = "0.6.0"
 linked-hash-map = "0.4.2"
 
 [dependencies]
-glib = "0.1.3"
-gtk = { version = "0.1.3", features = ["v3_14"] }
-#gdk = { git = "https://github.com/gtk-rs/gdk" }
-#pango = { git = "https://github.com/gtk-rs/pango" }
+glib = { git = "https://github.com/gtk-rs/glib", features = [ "v2_46" ] }
+gtk = { git = "https://github.com/gtk-rs/gtk", features = ["v3_14"] }
+pango = { git = "https://github.com/gtk-rs/pango", features = ["v1_36_7"] }
 gettext-rs = "0.3.0"
 sxd-document = "0.2.3"
 lazy_static = "0.2"
