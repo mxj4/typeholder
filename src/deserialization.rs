@@ -177,6 +177,12 @@ fn update_family<'a>(
                 )
             })
             .filter(|&(_, ref code_points)| !code_points.is_empty())
+            .coalesce(|mut r0, mut r1| if r0.0 == r1.0 {
+                r0.1.append(&mut r1.1);
+                Ok(r0)
+            } else {
+                Err((r0, r1))
+            })
             .map(|(k, code_points)| match k.1 {
                 "Block" => Range::Block {
                     name: String::from(k.0),

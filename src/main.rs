@@ -105,7 +105,7 @@ fn main() {
                     code_points: ref v,
                 } => (
                     n,
-                    "Block",
+                    "Script",
                     v.iter()
                         .map(|&(x, y)| format!("0x{:x}..0x{:x}", x, y))
                         .join(", "),
