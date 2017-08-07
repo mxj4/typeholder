@@ -9,7 +9,6 @@ use pango::ContextExt;
 use pango::FontMapExt;
 use pango::FontFamilyExt;
 use range::Range;
-use sxd_document::dom;
 use sxd_document::dom::Comment;
 use sxd_document::dom::ChildOfElement;
 use sxd_document::dom::Element;
@@ -133,9 +132,7 @@ fn update_family<'a>(
         "string",
         checked_child_element("test", e),
     )).text();
-    let matched_family = families.iter().find(
-        |x| x.borrow().deref().name == family_name,
-    );
+    let matched_family = families.iter().find(|x| x.borrow().name == family_name);
     if matched_family.is_some() {
         let nil_range_template = ("nil", "Custom");
         let mut current_range_templates = nil_range_template;

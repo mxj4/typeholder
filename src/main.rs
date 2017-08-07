@@ -9,6 +9,7 @@ extern crate sxd_document;
 
 use std::ops::Deref;
 use std::time::Instant;
+use itertools::Itertools;
 use glib::{Continue, idle_add, timeout_add, timeout_add_seconds};
 use gtk::prelude::*;
 use gtk::{WidgetExt, Window, WindowPosition, WindowType, HeaderBar, StackSwitcher, ToggleButton,
@@ -77,15 +78,10 @@ fn main() {
     aliases_tree.set_model(Some(&aliases_store));
     aliases_tree.set_headers_visible(false);
     append_text_column(&aliases_tree);
-    for i in &["sans-serif", "serif", "monospace"] {
-        let iter = aliases_store.insert_with_values(None, None, &[0], &[&format!("{}", i)]);
-        for j in 0..3 {
-            aliases_store.insert_with_values(
-                Some(&iter),
-                None,
-                &[0],
-                &[&format!("Test Family {}", j)],
-            );
+    for i in &fc_config.aliases {
+        let iter = aliases_store.insert_with_values(None, None, &[0], &[&format!("{}", i.name)]);
+        for j in &i.prefer_list {
+            aliases_store.insert_with_values(Some(&iter), None, &[0], &[&j.borrow().name]);
         }
     }
     aliases_tree.expand_all();
@@ -94,6 +90,40 @@ fn main() {
     let charsets_store = TreeStore::new(&[String::static_type()]);
     charsets_tree.set_model(Some(&charsets_store));
     charsets_tree.set_headers_visible(false);
+    append_text_column(&charsets_tree);
+    for i in &fc_config.scan_matches {
+        let iter =
+            charsets_store.insert_with_values(None, None, &[0], &[&format!("{}", i.borrow().name)]);
+        for j in &i.borrow().stripped_ranges {
+            let (range_name, range_type, range_value) = match j {
+                &range::Range::Block {
+                    name: ref n,
+                    code_points: ref v,
+                } => (n, "Block", format!("0x{:x}..0x{:x}", v.0, v.1)),
+                &range::Range::Script {
+                    name: ref n,
+                    code_points: ref v,
+                } => (
+                    n,
+                    "Block",
+                    v.iter()
+                        .map(|&(x, y)| format!("0x{:x}..0x{:x}", x, y))
+                        .join(", "),
+                ),
+                &range::Range::Custom {
+                    name: ref n,
+                    code_points: ref v,
+                } => (n, "Custom", format!("0x{:x}..0x{:x}", v.0, v.1)),
+            };
+            charsets_store.insert_with_values(
+                Some(&iter),
+                None,
+                &[0],
+                &[&format!("{}: {} {}", range_name, range_type, range_value)],
+            );
+        }
+    }
+    charsets_tree.expand_all();
 
     stack.add_titled(&aliases_tree, "aliases", "Aliases");
     stack.add_titled(&charsets_tree, "charsets", "Charsets");
