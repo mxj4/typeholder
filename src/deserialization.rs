@@ -18,8 +18,10 @@ use sxd_document::parser;
 
 use std::cell::RefCell;
 use std::fs::File;
+use std::i32;
 use std::io::Read;
 use std::ops::Deref;
+use std::ops::DerefMut;
 
 
 pub fn list_families(context: &Context) -> Vec<RefCell<Family>> {
@@ -68,9 +70,7 @@ pub fn parse_or_default<'a>(families: &'a Vec<RefCell<Family>>) -> Config<'a> {
     {
         let doc = config_package.as_document();
 
-        let old_root_element = doc.root().children()[0].element().expect(
-            "Invalid XML root in the configuration file!",
-        );
+        let old_root_element = doc.root().children()[0].element().expect(INVALID_CONFIG);
 
         // rest of dom collection
         let new_root_element = doc.create_element(old_root_element.name());
@@ -88,7 +88,10 @@ pub fn parse_or_default<'a>(families: &'a Vec<RefCell<Family>>) -> Config<'a> {
                     } else if x.name().local_part() == "match" &&
                                x.attribute_value("target").unwrap_or("") == "scan"
                     {
-                        // todo
+                        match update_family(x, families) {
+                            Some(y) => scan_matches.push(y),
+                            _ => {}
+                        }
                     }
                 }
                 x => new_root_element.append_child(x),
@@ -122,17 +125,88 @@ fn is_typeholder_comment(x: Comment) -> bool {
     x.text().starts_with(TYPEHOLDER_COMMENT_PREFIX)
 }
 
-fn collect_scan_matches<'a>(
-    root: dom::Root,
+fn update_family<'a>(
+    e: Element,
     families: &'a Vec<RefCell<Family>>,
-) -> Vec<&'a RefCell<Family>> {
-    // todo
-    vec![]
+) -> Option<&'a RefCell<Family>> {
+    let family_name = checked_text(checked_child_element(
+        "string",
+        checked_child_element("test", e),
+    )).text();
+    let matched_family = families.iter().find(
+        |x| x.borrow().deref().name == family_name,
+    );
+    if matched_family.is_some() {
+        let nil_range_template = ("nil", "Custom");
+        let mut current_range_templates = nil_range_template;
+        let charset_elem = checked_child_element(
+            "charset",
+            checked_child_element("minus", checked_child_element("edit", e)),
+        );
+        let ranges = charset_elem
+            .children()
+            .into_iter()
+            .group_by(|x| match x {
+                &ChildOfElement::Comment(y) => {
+                    current_range_templates = y.text()
+                        .splitn(2, ',')
+                        .map(str::trim)
+                        .next_tuple::<(_, _)>()
+                        .expect(INVALID_CONFIG);
+                    current_range_templates
+                }
+                &ChildOfElement::Element(y) if y.name().local_part() == "range" => {
+                    current_range_templates
+                }
+                _ => nil_range_template,
+            })
+            .into_iter()
+            .map(|(k, group)| {
+                (
+                    k,
+                    group
+                        .filter_map(|child| child.element())
+                        .filter(|elem| elem.name().local_part() == "range")
+                        .map(|range_elem| {
+                            children_element("int", range_elem)
+                                .map(|int_elem| {
+                                    i32::from_str_radix(&checked_text(int_elem).text()[2..], 16)
+                                        .expect(INVALID_CONFIG)
+                                })
+                                .next_tuple::<(_, _)>()
+                                .expect(INVALID_CONFIG)
+                        })
+                        .collect_vec(),
+                )
+            })
+            .filter(|&(_, ref code_points)| !code_points.is_empty())
+            .map(|(k, code_points)| match k.1 {
+                "Block" => Range::Block {
+                    name: String::from(k.0),
+                    code_points: code_points[0],
+                },
+                "Script" => Range::Script {
+                    name: String::from(k.0),
+                    code_points: code_points,
+                },
+                _ => Range::Custom {
+                    name: String::from(k.0),
+                    code_points: code_points[0],
+                },
+            })
+            .collect_vec();
+        matched_family
+            .unwrap()
+            .borrow_mut()
+            .deref_mut()
+            .stripped_ranges = ranges;
+    }
+    matched_family
 }
 
 fn parse_alias<'a>(e: Element, families: &'a Vec<RefCell<Family>>) -> Alias<'a> {
-    let alias_name = checked_text(checked_child("family", e)).text();
-    let p_list = children("family", checked_child("prefer", e))
+    let alias_name = checked_text(checked_child_element("family", e)).text();
+    let p_list = children_element("family", checked_child_element("prefer", e))
         .filter_map(|x| {
             families.iter().find(|y| {
                 y.borrow().deref().name == checked_text(x).text()
@@ -146,19 +220,22 @@ fn parse_alias<'a>(e: Element, families: &'a Vec<RefCell<Family>>) -> Alias<'a> 
     }
 }
 
-fn checked_child<'a: 'd, 'd>(name: &'a str, e: Element<'d>) -> Element<'d> {
-    child(name, e).expect(&format!(
+fn checked_child_element<'a: 'd, 'd>(name: &'a str, e: Element<'d>) -> Element<'d> {
+    child_element(name, e).expect(&format!(
         "Element {} has no {} child!",
         e.name().local_part(),
         name
     ))
 }
 
-fn child<'a: 'd, 'd>(name: &'a str, e: Element<'d>) -> Option<Element<'d>> {
-    children(name, e).next()
+fn child_element<'a: 'd, 'd>(name: &'a str, e: Element<'d>) -> Option<Element<'d>> {
+    children_element(name, e).next()
 }
 
-fn children<'a: 'd, 'd>(name: &'a str, e: Element<'d>) -> impl Iterator<Item = Element<'d>> + 'd {
+fn children_element<'a: 'd, 'd>(
+    name: &'a str,
+    e: Element<'d>,
+) -> impl Iterator<Item = Element<'d>> + 'd {
     e.children()
         .into_iter()
         .filter_map(|x| x.element())
